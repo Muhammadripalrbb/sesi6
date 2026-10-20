@@ -1,12 +1,19 @@
+"""
+=== PROYEK SKRIPSI / ANALISIS BISNIS: KLASIFIKASI DEFORESTASI HUTAN TROPIS MENGGUNAKAN MACHINE LEARNING ===
+Deskripsi: Script ini berisi simulasi pembuatan data satelit (Sentinel-1 & Sentinel-2), 
+           prapemrosesan, pemodelan menggunakan Random Forest, hingga evaluasi matriks kebingungan.
+"""
+
 import numpy as np
 import pandas as pd
+import os
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# 1. Simulasi / Pembuatan Dummy Dataset (Merepresentasikan Ekstraksi Fitur Satelit Sentinel-1 & Sentinel-2)
+print("--- 1. SIMULASI / PEMBUATAN DATASET ---")
 np.random.seed(42)
 n_samples = 1500
 
@@ -15,13 +22,12 @@ data = {
     'sentinel2_nir_mean': np.random.uniform(0.1, 0.9, n_samples),
     'sentinel2_swir_mean': np.random.uniform(0.05, 0.6, n_samples),
     'fire_hotspot_detected': np.random.choice([0, 1], size=n_samples, p=[0.7, 0.3]),
-    'patch_area_ha': np.exponential(scale=5.0, size=n_samples),
-    'distance_to_road_km': np.exponential(scale=2.0, size=n_samples)
+    'patch_area_ha': np.random.exponential(scale=5.0, size=n_samples),
+    'distance_to_road_km': np.random.exponential(scale=2.0, size=n_samples)
 }
 
 df = pd.DataFrame(data)
 
-# Logika penentuan Target Driver tiruan berdasarkan karakteristik sensor
 def assign_driver(row):
     if row['fire_hotspot_detected'] == 1 and row['sentinel2_swir_mean'] > 0.4:
         return 'Wildfire'
@@ -35,28 +41,36 @@ def assign_driver(row):
         return 'Small-Scale Agriculture'
 
 df['target_driver'] = df.apply(assign_driver, axis=1)
+print(f"Total data dummy berhasil dibuat: {df.shape}")
 
-# 2. Data Preparation & Train-Test Split
+print("\n--- 2. DATA PREPARATION & TRAIN-TEST SPLIT ---")
 X = df.drop(columns=['target_driver'])
 y = df['target_driver']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)
+print(f"Data latih: {X_train.shape}, Data uji: {X_test.shape}")
 
-# 3. Pemodelan (Modeling) menggunakan Random Forest Classifier
+print("\n--- 3. PEMODELAN (RANDOM FOREST) ---")
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
+print("Model berhasil dilatih!")
 
-# 4. Prediksi & Evaluasi
+print("\n--- 4. EVALUASI MODEL ---")
 y_pred = model.predict(X_test)
-print("--- LAPORAN KLASIFIKASI MODEL ---")
 print(classification_report(y_test, y_pred))
 
 # Visualisasi Confusion Matrix
 plt.figure(figsize=(8, 6))
 cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=model.classes_, yticklabels=model.classes_ if hasattr(model, 'classes_') else model.classes_)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=model.classes_, yticklabels=model.classes_)
 plt.xlabel('Prediksi Model')
 plt.ylabel('Kondisi Aktual (Ground Truth)')
 plt.title('Confusion Matrix - Klasifikasi Penyebab Deforestasi')
 plt.tight_layout()
-plt.show()
+
+# Mengambil path direktori tempat script ini berada agar gambar pasti tersimpan di folder yang sama
+current_dir = os.path.dirname(os.path.abspath(__file__))
+save_path = os.path.join(current_dir, 'confusion_matrix_result.png')
+
+plt.savefig(save_path)
+print(f"Grafik Confusion Matrix berhasil disimpan di: {save_path}")
