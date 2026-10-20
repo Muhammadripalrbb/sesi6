@@ -85,7 +85,12 @@ python all_in_one_solution.py
 ```
 
 ## 📊 Contoh Output
+<br>
 
+### 📈 Visualisasi Confusion Matrix
+<div align="center">
+  <img src="confusion_matrix_result.png" alt="Confusion Matrix Hasil Klasifikasi" width="600"/>
+</div>
 Jika kode dieksekusi dengan benar, skrip akan menampilkan ringkasan data, matriks evaluasi, dan secara otomatis menyimpan gambar *Confusion Matrix* hasil pelatihan.
 
 ```text
